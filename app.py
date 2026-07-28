@@ -11,14 +11,24 @@ except ImportError:
 
 # Load .env file so GEMINI_API_KEY is available in the environment.
 load_dotenv()
-api_key = os.environ.get("GEMINI_API_KEY")
+# Prefer Streamlit Secrets (deployed) then environment variables (local).
+# Also sanitize the value to remove accidental quotes or surrounding whitespace.
+api_key = None
+try:
+    api_key = st.secrets.get("GEMINI_API_KEY")
+except Exception:
+    api_key = None
+if not api_key:
+    api_key = os.environ.get("GEMINI_API_KEY")
+if api_key:
+    api_key = api_key.strip().strip('"').strip("'")
 
 st.title("Streamlit Gemini Chat")
 st.write("Ask Gemini anything and get a response from the Gemini model.")
 
 if not api_key:
     st.error(
-        "GEMINI_API_KEY is not set. Add it to your .env file as `GEMINI_API_KEY=...` and restart the app."
+        "GEMINI_API_KEY is not set. Add it to Streamlit Secrets (preferred) or to your .env file as GEMINI_API_KEY=... and restart the app."
     )
 
 if genai is None:
